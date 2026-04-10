@@ -57,27 +57,36 @@ def parse_action(text: str) -> dict[str, any]:
     json_text = text
 
     if not json_text.startswith("{"):
-        match = re.search(r"\{.*\}", text, re.DOTALL)
-        if match:
-            json_text = match.group(0)
+        try:
+            match = re.search(r"\{.*\}", text, re.DOTALL)
+            if match:
+                json_text = match.group(0)
+        except Exception as e:
+            print(f"Error during regex search: {e}")
+            return {}
 
     try:
         return json.loads(json_text)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"Unable to parse JSON output: {exc} | response: {text}")
+    except Exception as e:
+        print(f"Error parsing JSON: {e} | response: {text}")
+        return {}
 
 
 def call_model(system_prompt: str, user_prompt: str) -> str:
-    response = openai.ChatCompletion.create(
-        model=MODEL_NAME,
-        messages=[
-            {"role": "system", "content": "You are an assistant that responds with valid JSON only."},
-            {"role": "user", "content": user_prompt},
-        ],
-        temperature=0.0,
-        max_tokens=256,
-    )
-    return response.choices[0].message["content"].strip()
+    try:
+        response = openai.ChatCompletion.create(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": "You are an assistant that responds with valid JSON only."},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.0,
+            max_tokens=256,
+        )
+        return response.choices[0].message["content"].strip()
+    except Exception as e:
+        print(f"Error calling LLM model: {e}")
+        return ""
 
 
 def main() -> int:
@@ -95,6 +104,8 @@ def main() -> int:
             prompt = build_message(task_name, observation.payload)
             model_output = call_model("", prompt)
             action_data = parse_action(model_output)
+            if not action_data:
+                action_data = {}
             action = Action(**action_data)
             result = env.step(action)
             step_index += 1
@@ -104,7 +115,7 @@ def main() -> int:
                 f"[STEP] step={step_index} action={sanitize_line(json.dumps(action_data, ensure_ascii=False))} "
                 f"reward={result.reward:.2f} done={str(result.done).lower()} error=null"
             )
-        except (OpenAIError, ValueError, TypeError) as exc:
+        except Exception as exc:
             step_index += 1
             success = False
             error_message = sanitize_line(str(exc))
