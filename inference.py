@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import sys
 
 import openai
 
@@ -52,8 +53,22 @@ def build_message(task_name: str, observation: dict[str, any]) -> str:
     return ""
 
 
+def strip_markdown(text: str) -> str:
+    """Strip markdown code blocks (```json ... ``` or ``` ... ```) from text."""
+    try:
+        # Remove ```json ... ``` or ``` ... ``` blocks
+        text = re.sub(r"```json\s*", "", text)
+        text = re.sub(r"```\s*", "", text)
+        return text.strip()
+    except Exception as e:
+        print(f"Error stripping markdown: {e}")
+        return text
+
+
 def parse_action(text: str) -> dict[str, any]:
     text = text.strip()
+    # Strip markdown before parsing
+    text = strip_markdown(text)
     json_text = text
 
     if not json_text.startswith("{"):
@@ -131,4 +146,10 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        exit_code = main()
+        sys.exit(exit_code)
+    except Exception as e:
+        print(f"[FATAL] Unhandled exception: {e}")
+        print("[END] success=false steps=0 score=0.0 rewards=0.0")
+        sys.exit(0)
