@@ -1,0 +1,12 @@
+name: ecommerce_catalog_manager
+version: 0.1.0
+description: "OpenEnv environment for e-commerce catalog cleanup tasks."
+entry_point: "python ecommerce_env.py"
+framework: fastapi
+tasks:
+  - categorize_product
+  - extract_attributes
+  - flag_and_fix
+metadata:
+  author: hackathon-participant
+  license: MIT
