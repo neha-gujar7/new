@@ -190,13 +190,21 @@ class EcommerceCatalogManagerEnv:
 app = FastAPI(title="E-Commerce Catalog Manager OpenEnv")
 env = EcommerceCatalogManagerEnv()
 
-
 @app.post("/reset", response_model=Observation)
-def reset_environment(request: ResetRequest) -> Observation:
+def reset_environment(request: Optional[ResetRequest] = None) -> Observation:
     try:
-        return env.reset(request.task)
+        # If the request is completely missing (null), default to the easy task
+        task_name = request.task if request else "categorize_product"
+        return env.reset(task_name)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+# @app.post("/reset", response_model=Observation)
+# def reset_environment(request: ResetRequest) -> Observation:
+#     try:
+#         return env.reset(request.task)
+#     except ValueError as exc:
+#         raise HTTPException(status_code=400, detail=str(exc))
 
 
 @app.post("/step", response_model=StepResponse)
