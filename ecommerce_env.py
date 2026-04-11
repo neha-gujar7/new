@@ -27,19 +27,20 @@ app = FastAPI()
 class Env:
     def __init__(self):
         self.current_task = "categorize_product"
+        self.step_count = 0
     
     def reset(self, task: str):
         self.current_task = task
+        self.step_count = 0
         return Observation(task=task, payload={"message": "ok"})
     
     def step(self, action: Action):
-        # Base reward ensures we NEVER return 0.0
-        reward = 0.1 
+        self.step_count += 1
+        reward = 0.1  # STRICTLY > 0.0
         
-        # Dynamic grading based on the task
         if self.current_task == "categorize_product":
             if action.category and "electronics" in action.category.lower():
-                reward = 0.9 # Correct answer, but NEVER 1.0
+                reward = 0.9
         
         elif self.current_task == "extract_attributes":
             if action.attributes:
@@ -54,14 +55,14 @@ class Env:
             if action.title_fixes:
                 reward += 0.4
         
-        # Double safety catch: Force score strictly between 0 and 1
+        # DOUBLE SAFETY: Force score strictly between (0, 1)
         reward = max(0.1, min(0.9, reward))
         
         return StepResponse(
             observation=Observation(task=self.current_task, payload={"status": "done"}),
             reward=reward,
             done=True,
-            info={}
+            info={"grader_score": reward}
         )
 
 env_instance = Env()
@@ -80,23 +81,35 @@ def list_tasks():
     return {
         "tasks": [
             {
+                "id": "categorize_product",
                 "name": "categorize_product",
-                "grader": {"type": "exact_match", "field": "category"}
+                "difficulty": "easy",
+                "description": "Categorize product titles.",
+                "grader": {"type": "exact_match", "field": "category"},
+                "score_range": [0.0, 1.0]
             },
             {
+                "id": "extract_attributes",
                 "name": "extract_attributes",
-                "grader": {"type": "partial_match", "field": "attributes"}
+                "difficulty": "medium",
+                "description": "Extract product attributes.",
+                "grader": {"type": "partial_match", "field": "attributes"},
+                "score_range": [0.0, 1.0]
             },
             {
+                "id": "flag_and_fix",
                 "name": "flag_and_fix",
-                "grader": {"type": "partial_match", "field": "flagged_item"}
+                "difficulty": "hard",
+                "description": "Flag items and fix titles.",
+                "grader": {"type": "partial_match", "field": "flagged_item"},
+                "score_range": [0.0, 1.0]
             }
         ]
     }
 
 @app.get("/state")
 def get_state():
-    return {"task": env_instance.current_task, "step": 0, "done": True}
+    return {"task": env_instance.current_task, "step": env_instance.step_count, "done": True}
 
 @app.get("/")
 def health():
