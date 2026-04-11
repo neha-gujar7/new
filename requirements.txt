@@ -3,3 +3,5 @@ pydantic
 openai
 uvicorn
 fastapi
+requests
+python-multipart

@@ -1,12 +1,18 @@
 name: ecommerce_catalog_manager
 version: 0.1.0
 description: "OpenEnv environment for e-commerce catalog cleanup tasks."
-entry_point: "python ecommerce_env.py"
+entry_point: "ecommerce_env:app"
 framework: fastapi
 tasks:
-  - categorize_product
-  - extract_attributes
-  - flag_and_fix
+  - name: categorize_product
+    difficulty: easy
+    description: "Assign a product title to the correct category"
+  - name: extract_attributes
+    difficulty: medium
+    description: "Extract Color and Size attributes from a product description"
+  - name: flag_and_fix
+    difficulty: hard
+    description: "Flag prohibited item and standardize remaining titles"
 metadata:
   author: hackathon-participant
   license: MIT
