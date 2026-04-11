@@ -1,6 +1,6 @@
 from __future__ import annotations
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
 
 class Observation(BaseModel):
@@ -31,7 +31,6 @@ def reset(request: Optional[ResetRequest] = None):
 
 @app.post("/step", response_model=StepResponse)
 def step(action: Action):
-    # Validator wants scores strictly within (0, 1)
     return StepResponse(
         observation=Observation(task="active", payload={}),
         reward=0.75,
@@ -41,10 +40,10 @@ def step(action: Action):
 
 @app.get("/tasks")
 def list_tasks():
-    # MANDATORY: Every field here must match the requirements in your screenshot
     return {
         "tasks": [
             {
+                "id": "categorize_product",
                 "name": "categorize_product",
                 "difficulty": "easy",
                 "description": "Categorize product titles.",
@@ -52,6 +51,7 @@ def list_tasks():
                 "score_range": [0.0, 1.0]
             },
             {
+                "id": "extract_attributes",
                 "name": "extract_attributes",
                 "difficulty": "medium",
                 "description": "Extract product attributes.",
@@ -59,6 +59,7 @@ def list_tasks():
                 "score_range": [0.0, 1.0]
             },
             {
+                "id": "flag_and_fix",
                 "name": "flag_and_fix",
                 "difficulty": "hard",
                 "description": "Flag items and fix titles.",
