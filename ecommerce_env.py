@@ -97,11 +97,12 @@ class EcommerceCatalogManagerEnv:
     def reset(self, task: str) -> Observation:
         if task not in self.task_definitions:
             raise ValueError(f"Unknown task: {task}")
-
         self.current_task = task
         self.step_count = 0
         self.done = False
-        self.current_observation = Observation(task=task, payload=self.task_definitions[task]["prompt"])
+        self.current_observation = Observation(
+            task=task, payload=self.task_definitions[task]["prompt"]
+        )
         return self.current_observation
 
     def step(self, action: Action) -> StepResponse:
@@ -130,14 +131,16 @@ class EcommerceCatalogManagerEnv:
             submitted = action.attributes or {}
             correct_count = 0
             attribute_info: Dict[str, Any] = {}
-
             for key, target in expected.items():
                 actual = submitted.get(key, "").strip()
                 is_correct = actual.lower() == target.lower()
-                attribute_info[key] = {"submitted": actual, "expected": target, "correct": is_correct}
+                attribute_info[key] = {
+                    "submitted": actual,
+                    "expected": target,
+                    "correct": is_correct,
+                }
                 if is_correct:
                     correct_count += 1
-
             reward = round(0.5 * correct_count, 2)
             info["attributes"] = attribute_info
 
@@ -151,19 +154,17 @@ class EcommerceCatalogManagerEnv:
             info["flagged_item"] = flagged
             info["expected_flagged_item"] = prohibited
             info["flag_correct"] = flag_correct
-
             fix_info: Dict[str, Any] = {}
             for original, canonical in expected_fixes.items():
-                submitted = fixes.get(original, "").strip()
-                is_correct = submitted == canonical
+                submitted_fix = fixes.get(original, "").strip()
+                is_correct = submitted_fix == canonical
                 fix_info[original] = {
-                    "submitted": submitted,
+                    "submitted": submitted_fix,
                     "expected": canonical,
                     "correct": is_correct,
                 }
                 if is_correct:
                     reward += 0.3
-
             info["title_fixes"] = fix_info
             reward = min(round(reward, 2), 1.0)
 
@@ -184,27 +185,22 @@ class EcommerceCatalogManagerEnv:
         )
 
     def state(self) -> EnvironmentState:
-        return EnvironmentState(task=self.current_task, step=self.step_count, done=self.done)
+        return EnvironmentState(
+            task=self.current_task, step=self.step_count, done=self.done
+        )
 
 
 app = FastAPI(title="E-Commerce Catalog Manager OpenEnv")
 env = EcommerceCatalogManagerEnv()
 
+
 @app.post("/reset", response_model=Observation)
 def reset_environment(request: Optional[ResetRequest] = None) -> Observation:
     try:
-        # If the request is completely missing (null), default to the easy task
         task_name = request.task if request else "categorize_product"
         return env.reset(task_name)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-
-# @app.post("/reset", response_model=Observation)
-# def reset_environment(request: ResetRequest) -> Observation:
-#     try:
-#         return env.reset(request.task)
-#     except ValueError as exc:
-#         raise HTTPException(status_code=400, detail=str(exc))
 
 
 @app.post("/step", response_model=StepResponse)
@@ -218,6 +214,35 @@ def step_environment(action: Action) -> StepResponse:
 @app.get("/state", response_model=EnvironmentState)
 def get_state() -> EnvironmentState:
     return env.state()
+
+
+@app.get("/tasks")
+def list_tasks() -> Dict[str, Any]:
+    return {
+        "tasks": [
+            {
+                "name": "categorize_product",
+                "difficulty": "easy",
+                "description": "Assign a product title to the correct category",
+                "grader": {"type": "exact_match", "field": "category"},
+                "score_range": [0.0, 1.0],
+            },
+            {
+                "name": "extract_attributes",
+                "difficulty": "medium",
+                "description": "Extract Color and Size attributes from a product description",
+                "grader": {"type": "partial_match", "field": "attributes"},
+                "score_range": [0.0, 1.0],
+            },
+            {
+                "name": "flag_and_fix",
+                "difficulty": "hard",
+                "description": "Flag prohibited item and standardize remaining titles",
+                "grader": {"type": "partial_match", "field": "flagged_item"},
+                "score_range": [0.0, 1.0],
+            },
+        ]
+    }
 
 
 @app.get("/")
