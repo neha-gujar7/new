@@ -1,27 +1,31 @@
+spec_version: 1
 name: ecommerce_catalog_manager
-version: 0.1.0
-description: "OpenEnv environment for e-commerce catalog cleanup tasks."
-entry_point: "ecommerce_env:app"
-framework: fastapi
+type: http
+runtime: docker
+app: ecommerce_env:app
+port: 7760
 tasks:
-  - name: categorize_product
+  - id: categorize_product
+    name: Categorize Product
     difficulty: easy
     description: "Assign a product title to the correct category"
     grader:
       type: exact_match
       field: category
-  - name: extract_attributes
+      score_range: [0.0, 1.0]
+  - id: extract_attributes
+    name: Extract Attributes
     difficulty: medium
     description: "Extract Color and Size attributes from a product description"
     grader:
       type: partial_match
       field: attributes
-  - name: flag_and_fix
+      score_range: [0.0, 1.0]
+  - id: flag_and_fix
+    name: Flag and Fix
     difficulty: hard
     description: "Flag prohibited item and standardize remaining titles"
     grader:
       type: partial_match
       field: flagged_item
-metadata:
-  author: hackathon-participant
-  license: MIT
+      score_range: [0.0, 1.0]
