@@ -7,12 +7,21 @@ tasks:
   - name: categorize_product
     difficulty: easy
     description: "Assign a product title to the correct category"
+    grader:
+      type: exact_match
+      field: category
   - name: extract_attributes
     difficulty: medium
     description: "Extract Color and Size attributes from a product description"
+    grader:
+      type: partial_match
+      field: attributes
   - name: flag_and_fix
     difficulty: hard
     description: "Flag prohibited item and standardize remaining titles"
+    grader:
+      type: partial_match
+      field: flagged_item
 metadata:
   author: hackathon-participant
   license: MIT
