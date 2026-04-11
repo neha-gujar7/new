@@ -1,7 +1,7 @@
 from __future__ import annotations
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 class Observation(BaseModel):
     task: str
@@ -24,6 +24,14 @@ class ResetRequest(BaseModel):
 
 app = FastAPI()
 
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
 @app.post("/reset", response_model=Observation)
 def reset(request: Optional[ResetRequest] = None):
     t = request.task if request else "categorize_product"
@@ -37,6 +45,10 @@ def step(action: Action):
         done=True,
         info={"message": "step_completed"}
     )
+
+@app.get("/state")
+def get_state():
+    return {"task": "categorize_product", "step": 0, "done": True}
 
 @app.get("/tasks")
 def list_tasks():
@@ -68,11 +80,3 @@ def list_tasks():
             }
         ]
     }
-
-@app.get("/state")
-def get_state():
-    return {"task": "categorize_product", "step": 0, "done": True}
-
-@app.get("/")
-def health():
-    return {"status": "ok"}
