@@ -1,31 +1,17 @@
-spec_version: 1
 name: ecommerce_catalog_manager
-type: http
-runtime: docker
-app: ecommerce_env:app
-port: 7760
+version: 0.1.0
+entry_point: "ecommerce_env:app"
+framework: fastapi
 tasks:
-  - id: categorize_product
-    name: Categorize Product
-    difficulty: easy
-    description: "Assign a product title to the correct category"
+  - name: categorize_product
     grader:
       type: exact_match
       field: category
-      score_range: [0.0, 1.0]
-  - id: extract_attributes
-    name: Extract Attributes
-    difficulty: medium
-    description: "Extract Color and Size attributes from a product description"
+  - name: extract_attributes
     grader:
       type: partial_match
       field: attributes
-      score_range: [0.0, 1.0]
-  - id: flag_and_fix
-    name: Flag and Fix
-    difficulty: hard
-    description: "Flag prohibited item and standardize remaining titles"
+  - name: flag_and_fix
     grader:
       type: partial_match
       field: flagged_item
-      score_range: [0.0, 1.0]
