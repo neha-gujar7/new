@@ -3,7 +3,7 @@ name: ecommerce_catalog_manager
 type: http
 runtime: docker
 app: ecommerce_env:app
-port: 7860
+port: 7760
 tasks:
   - id: categorize_product
     name: categorize_product
